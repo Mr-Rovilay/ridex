@@ -22,7 +22,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "react-hot-toast"; 
+import { toast } from "react-hot-toast";
 
 const stepVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -30,11 +30,41 @@ const stepVariants = {
 };
 
 const VEHICLES = [
-  { id: "bike", label: "Bike", Icon: Bike, desc: "Quick & affordable", price: "₹49/km" },
-  { id: "auto", label: "Auto", Icon: Car, desc: "Best for city rides", price: "₹39/km" },
-  { id: "car", label: "Car", Icon: CarIcon, desc: "Comfortable & spacious", price: "₹79/km" },
-  { id: "loading", label: "Loading", Icon: Truck, desc: "For heavy goods", price: "₹99/km" },
-  { id: "truck", label: "Truck", Icon: Truck, desc: "Large capacity", price: "₹129/km" },
+  {
+    id: "bike",
+    label: "Bike",
+    Icon: Bike,
+    desc: "Quick & affordable",
+    price: "₹49/km",
+  },
+  {
+    id: "auto",
+    label: "Auto",
+    Icon: Car,
+    desc: "Best for city rides",
+    price: "₹39/km",
+  },
+  {
+    id: "car",
+    label: "Car",
+    Icon: CarIcon,
+    desc: "Comfortable & spacious",
+    price: "₹79/km",
+  },
+  {
+    id: "loading",
+    label: "Loading",
+    Icon: Truck,
+    desc: "For heavy goods",
+    price: "₹99/km",
+  },
+  {
+    id: "truck",
+    label: "Truck",
+    Icon: Truck,
+    desc: "Large capacity",
+    price: "₹129/km",
+  },
 ];
 
 type Place = {
@@ -64,10 +94,25 @@ const Page = () => {
   const [pickUpSuggestions, setPickUpSuggestions] = useState<Place[]>([]);
   const [dropSuggestions, setDropSuggestions] = useState<Place[]>([]);
 
-  const canContinue = !!(vehicle && mobile.length === 10 && pickUp && drop && pickUpLat && pickUpLon && dropLat && dropLon);
-  const progress = [!!vehicle, mobile.length === 10, !!pickUp, !!drop].filter(Boolean).length;
+  const canContinue = !!(
+    vehicle &&
+    mobile.length === 10 &&
+    pickUp &&
+    drop &&
+    pickUpLat &&
+    pickUpLon &&
+    dropLat &&
+    dropLon
+  );
+  const progress = [!!vehicle, mobile.length === 10, !!pickUp, !!drop].filter(
+    Boolean,
+  ).length;
 
-  const searchAddress = async (q: string, setResults: (r: Place[]) => void, restrict?: string | null) => {
+  const searchAddress = async (
+    q: string,
+    setResults: (r: Place[]) => void,
+    restrict?: string | null,
+  ) => {
     try {
       if (!q || q.trim().length < 3) {
         setResults([]);
@@ -76,7 +121,7 @@ const Page = () => {
       const { data } = await axios.get(
         `https://photon.komoot.io/api/?q=${encodeURIComponent(q.trim())}&limit=8&lang=en`,
       );
-      
+
       let results: Place[] = (data.features ?? []).map((f: any) => ({
         id: String(f.properties.osm_id),
         name: f.properties.name,
@@ -87,9 +132,9 @@ const Page = () => {
         lat: f.geometry.coordinates[1],
         lng: f.geometry.coordinates[0],
       }));
-      
+
       if (restrict) {
-        results = results.filter(r => r.country === restrict);
+        results = results.filter((r) => r.country === restrict);
       }
       setResults(results);
     } catch (error) {
@@ -158,24 +203,40 @@ const Page = () => {
     );
   };
 
-    const handleContinue = () => {
+  const handleContinue = () => {
     if (!vehicle) return toast.error("Select a vehicle");
     if (mobile.length !== 10) return toast.error("Enter valid mobile");
     if (!pickUpLat) return toast.error("Select pickup from suggestion or GPS");
     if (!dropLat) return toast.error("Select drop from suggestion");
 
     router.push(
-  `/user/search?pickup=${encodeURIComponent(pickUp)}&drop=${encodeURIComponent(drop)}&vehicle=${vehicle}&mobile=${mobile}&pickupLat=${pickUpLat}&pickupLon=${pickUpLon}&dropLat=${dropLat}&dropLon=${dropLon}`
-);
+      `/user/search?pickup=${encodeURIComponent(pickUp)}&drop=${encodeURIComponent(drop)}&vehicle=${vehicle}&mobile=${mobile}&pickupLat=${pickUpLat}&pickupLon=${pickUpLon}&dropLat=${dropLat}&dropLon=${dropLon}`,
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-950">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-800 via-black to-zinc-950">
+      <div className="absolute inset-0">
+        <div className="absolute top-0 left-0 w-0 h-0">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-amber-500/20 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] animate-pulse delay-700" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-500 bg-purple-500/10 rounded-full blur-[120px]" />
+        </div>
+
+        {/* Subtle noise texture */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E")`,
+            backgroundRepeat: "repeat",
+          }}
+        />
+      </div>
       {/* Header - Matching Admin Dashboard Style */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-black/80 border-b border-white/10">
+      <div className="sticky top-0 z-50 backdrop-blur-xl bg-black/80 border-b border-white/10 ">
         <div className="max-w-7xl mx-auto h-16 px-6 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => router.push("/")}
               className="flex items-center gap-2 group"
             >
@@ -226,23 +287,31 @@ const Page = () => {
             { step: 1, label: "Vehicle" },
             { step: 2, label: "Mobile" },
             { step: 3, label: "Route" },
-            { step: 4, label: "Confirm" }
+            { step: 4, label: "Confirm" },
           ].map((item, idx) => (
             <div key={idx} className="flex-1">
-              <div className={`h-1 rounded-full transition-all duration-500 ${
-                idx < progress ? "bg-gradient-to-r from-blue-400 to-purple-500" : "bg-white/10"
-              }`} />
+              <div
+                className={`h-1 rounded-full transition-all duration-500 ${
+                  idx < progress
+                    ? "bg-gradient-to-r from-blue-400 to-purple-500"
+                    : "bg-white/10"
+                }`}
+              />
               <div className="flex items-center gap-2 mt-2">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold ${
-                  idx < progress 
-                    ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white" 
-                    : "bg-white/10 text-white/40"
-                }`}>
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold ${
+                    idx < progress
+                      ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white"
+                      : "bg-white/10 text-white/40"
+                  }`}
+                >
                   {item.step}
                 </div>
-                <span className={`text-xs ${
-                  idx < progress ? "text-white/70" : "text-white/30"
-                }`}>
+                <span
+                  className={`text-xs ${
+                    idx < progress ? "text-white/70" : "text-white/30"
+                  }`}
+                >
                   {item.label}
                 </span>
               </div>
@@ -275,17 +344,23 @@ const Page = () => {
                   onClick={() => setVehicle(v.id as vehicleType)}
                   key={i}
                   className={`cursor-pointer rounded-xl p-3 transition-all ${
-                    active 
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/50" 
+                    active
+                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/50"
                       : "bg-white/5 border border-white/10 hover:border-white/20"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <v.Icon className={`w-6 h-6 ${active ? "text-blue-400" : "text-white/60"}`} />
-                    {active && <CheckCircle className="w-4 h-4 text-blue-400" />}
+                    <v.Icon
+                      className={`w-6 h-6 ${active ? "text-blue-400" : "text-white/60"}`}
+                    />
+                    {active && (
+                      <CheckCircle className="w-4 h-4 text-blue-400" />
+                    )}
                   </div>
                   <div>
-                    <p className={`font-semibold text-sm ${active ? "text-white" : "text-white/80"}`}>
+                    <p
+                      className={`font-semibold text-sm ${active ? "text-white" : "text-white/80"}`}
+                    >
                       {v.label}
                     </p>
                     <p className="text-xs text-white/40 mt-1">{v.desc}</p>
@@ -409,7 +484,9 @@ const Page = () => {
                       className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-white/5 last:border-0"
                     >
                       <MapPin className="w-4 h-4 text-white/40" />
-                      <span className="flex-1 text-sm text-white/80">{suggestion(p)}</span>
+                      <span className="flex-1 text-sm text-white/80">
+                        {suggestion(p)}
+                      </span>
                       <ChevronRight className="w-4 h-4 text-white/30" />
                     </motion.div>
                   ))}
@@ -425,12 +502,20 @@ const Page = () => {
               <input
                 onChange={(e) => {
                   setDrop(e.target.value);
-                  searchAddress(e.target.value, setDropSuggestions, pickUpCountry);
+                  searchAddress(
+                    e.target.value,
+                    setDropSuggestions,
+                    pickUpCountry,
+                  );
                 }}
                 disabled={!pickUpCountry}
                 value={drop}
                 type="text"
-                placeholder={pickUpCountry ? "Drop location" : "Select pickup location first"}
+                placeholder={
+                  pickUpCountry
+                    ? "Drop location"
+                    : "Select pickup location first"
+                }
                 className="flex-1 outline-none bg-transparent text-white placeholder:text-white/30 disabled:opacity-50"
               />
               <Navigation className="w-5 h-5 text-white/40" />
@@ -458,7 +543,9 @@ const Page = () => {
                       className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-white/5 last:border-0"
                     >
                       <MapPin className="w-4 h-4 text-white/40" />
-                      <span className="flex-1 text-sm text-white/80">{suggestion(p)}</span>
+                      <span className="flex-1 text-sm text-white/80">
+                        {suggestion(p)}
+                      </span>
                       <ChevronRight className="w-4 h-4 text-white/30" />
                     </motion.div>
                   ))}
@@ -484,7 +571,9 @@ const Page = () => {
               </div>
               <div className="text-right">
                 <p className="text-white/60 text-sm">Distance</p>
-                <p className="text-white">~{Math.floor(Math.random() * 30) + 5} km</p>
+                <p className="text-white">
+                  ~{Math.floor(Math.random() * 30) + 5} km
+                </p>
               </div>
             </div>
           </motion.div>
@@ -500,10 +589,10 @@ const Page = () => {
             whileHover={{ scale: canContinue ? 1.02 : 1 }}
             whileTap={{ scale: canContinue ? 0.98 : 1 }}
             disabled={!canContinue}
-           onClick={handleContinue}
+            onClick={handleContinue}
             className={`w-full py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-              canContinue 
-                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40" 
+              canContinue
+                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
                 : "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
             }`}
           >

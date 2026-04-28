@@ -24,6 +24,12 @@ export interface IUser extends Document {
   videoKycRoomId: string;
   videoKycRejectionReason: string;
   rejectionReason?: string;
+  socketId: string;
+  location?:{
+    type:"Point",
+    coordinates:[number, number]
+  },
+  isOnline:boolean; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,13 +83,29 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     videoKycRejectionReason: {
       type: String
+    },
+    socketId: {
+      type: String,
+      default: null
+    },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point"
+      },
+      coordinates: [Number]     
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+      index: true
     }
   },
   { timestamps: true }
 );
 
-// This pattern is excellent for serverless environments like Next.js API routes 
-// to prevent connection leaks during hot reloads.
+userSchema.index({location:"2dsphere"})
 const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 
 export default User;
