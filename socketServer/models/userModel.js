@@ -1,40 +1,7 @@
 import mongoose, { Document } from "mongoose";
 
-// Fixed: Removed the incorrect curly braces for the string literal union
-type VideoKycStatus =
-  | "not_required"
-  | "pending"
-  | "in_progress"
-  | "approved"
-  | "rejected";
 
-// Fixed: Document is now properly imported from mongoose
-export interface IUser extends Document {
-  name: string;
-  email: string;
-  password?: string;
-  role: "user" | "admin" | "partner";
-  isEmailVerified: boolean; 
-  otp?: string;
-  otpExpiresAt?: Date;
-  mobileNumber?: string;
-  partnerOnboardingSteps: number;
-  partnerStatus: "pending" | "approved" | "rejected";
-  videoKycStatus: VideoKycStatus;
-  videoKycRoomId: string;
-  videoKycRejectionReason: string;
-  rejectionReason?: string;
-  socketId: string;
-  location?:{
-    type:"Point",
-    coordinates:[number, number]
-  },
-  isOnline:boolean; 
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const userSchema = new mongoose.Schema<IUser>(
+const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -92,7 +59,6 @@ const userSchema = new mongoose.Schema<IUser>(
       type: {
         type: String,
         enum: ["Point"],
-        
       },
       coordinates: [Number]     
     },
@@ -106,6 +72,6 @@ const userSchema = new mongoose.Schema<IUser>(
 );
 
 userSchema.index({location:"2dsphere"})
-const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

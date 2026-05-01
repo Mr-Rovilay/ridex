@@ -6,7 +6,11 @@ const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(process.env.MONGODB_URL!, {
+    const mongoUrl = process.env.MONGODB_URL;
+    if (!mongoUrl) {
+      throw new Error("MONGODB_URL environment variable is required");
+    }
+    await mongoose.connect(mongoUrl, {
       // Add connection options if needed
     });
     console.log("MongoDB connected successfully");

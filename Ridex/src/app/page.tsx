@@ -9,18 +9,27 @@ import User from "@/models/userModel";
 export default async function Home() {
   await connectDB();
   const session = await auth();
-  const user = await User.findOne({ email: session?.user?.email });
 
   if (!session) return <PublicHome />;
 
-  switch (user?.role) {
+  const user = await User.findOne({ email: session.user.email });
+  if (!user) return <PublicHome />; // handle case where user not in DB
+
+  const userId = user.id;
+
+  switch (user.role) {
     case "admin":
-      return <AdminDashboard />;
+      return (  // <-- return the JSX, no semicolon here
+        <>
+          <GeoUpdater userId={userId} />
+          <AdminDashboard />
+        </>
+      );
 
     case "partner":
       return (
         <>
-          <GeoUpdater userId={user._id.toString()} />
+          <GeoUpdater userId={userId} />
           <PartnerDashboard />
         </>
       );
@@ -28,7 +37,7 @@ export default async function Home() {
     default:
       return (
         <>
-          <GeoUpdater userId={user._id.toString()} />
+          <GeoUpdater userId={userId} />
           <PublicHome />
         </>
       );

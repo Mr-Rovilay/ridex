@@ -1,9 +1,35 @@
 "use client";
 import SearchMap from "@/components/SearchMap";
-import { ArrowLeft, MapPin, Navigation, Clock, DollarSign, Shield, ChevronRight, CreditCard, Headphones, Car, Bike, Truck } from "lucide-react";
-import { motion } from "motion/react";
+import { IVehicle } from "@/models/vehicleModel";
+import axios from "axios";
+import {
+  ArrowLeft,
+  MapPin,
+  Navigation,
+  Clock,
+  DollarSign,
+  Shield,
+  ChevronRight,
+  CreditCard,
+  Headphones,
+  Car,
+  Bike,
+  Truck,
+  Zap,
+  Search,
+  RefreshCcw,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+  const VEHICLE_META: any= {
+    bike:{label: "Bike", Icon: Bike},
+    auto:{label: "Bike", Icon: Car},
+    car:{label: "Bike", Icon: Bike},
+    loading:{label: "Bike", Icon: Truck},
+    truck:{label: "Bike", Icon: Truck}
+  }
 
 const Page = () => {
   const router = useRouter();
@@ -15,20 +41,63 @@ const Page = () => {
   const mobile = params.get("mobile");
   const pickUpLat = Number(params.get("pickupLat"));
   const pickUpLon = Number(params.get("pickupLon"));
-  const dropLat = Number(params.get("dropLat"));
-  const dropLon = Number(params.get("dropLon"));
-  const vehicle = params.get("vehicle");
+  const dropLat = Number(params.get("droplat"));
+  const dropLon = Number(params.get("droplon"));
+  const vehicle = params.get("vehicle") || ""
+  const [vehicles, setVehicles] = useState<IVehicle[]>([]);
+  const [loading, setLoading] = useState(false)
+  const meta = VEHICLE_META[vehicle]
 
   // Get vehicle icon
   const getVehicleIcon = () => {
-    switch(vehicle) {
-      case "bike": return <Bike className="w-5 h-5" />;
-      case "auto": return <Car className="w-5 h-5" />;
-      case "car": return <Car className="w-5 h-5" />;
-      case "truck": return <Truck className="w-5 h-5" />;
-      default: return <Car className="w-5 h-5" />;
+    switch (vehicle) {
+      case "bike":
+        return <Bike className="w-5 h-5" />;
+      case "auto":
+        return <Car className="w-5 h-5" />;
+      case "car":
+        return <Car className="w-5 h-5" />;
+      case "truck":
+        return <Truck className="w-5 h-5" />;
+      default:
+        return <Car className="w-5 h-5" />;
     }
   };
+
+
+
+const getNearByVehicles = async (
+  latitude: number,
+  longitude: number,
+  vehicleType: string | null
+) => {
+  if (!latitude || !longitude) return;
+
+  setLoading(true);
+  try {
+    const { data } = await axios.post("/api/vehicles/near-by", {
+      latitude,
+      longitude,
+      vehicleType,
+    });
+console.log(data)
+    setVehicles(data);
+  } catch (error: any) {
+    console.log("ERROR:", error?.response?.data || error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+    if (!pickUpLat || !pickUpLon) return;
+
+    const fetchVehicles = async () => {
+      await getNearByVehicles(pickUpLat, pickUpLon, vehicle);
+    };
+
+    void fetchVehicles();
+  }, [pickUpLat, pickUpLon, pickUp]);
 
   // Calculate fare based on vehicle type and distance
   const getFare = () => {
@@ -37,7 +106,7 @@ const Page = () => {
       auto: 39,
       car: 79,
       loading: 99,
-      truck: 129
+      truck: 129,
     };
     const rate = rates[vehicle || "car"] || 79;
     return Math.floor(km * rate);
@@ -47,7 +116,9 @@ const Page = () => {
   const estimatedTime = Math.max(3, Math.round((km / 25) * 60));
 
   const handleConfirmBooking = () => {
-    router.push(`/payment?pickup=${encodeURIComponent(pickUp)}&drop=${encodeURIComponent(drop)}&vehicle=${vehicle}&mobile=${mobile}&km=${km}&fare=${fare}&duration=${estimatedTime}`);
+    router.push(
+      `/payment?pickup=${encodeURIComponent(pickUp)}&drop=${encodeURIComponent(drop)}&vehicle=${vehicle}&mobile=${mobile}&km=${km}&fare=${fare}&duration=${estimatedTime}`,
+    );
   };
 
   return (
@@ -56,7 +127,7 @@ const Page = () => {
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto h-16 px-4 md:px-6 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => router.back()}
               className="flex items-center gap-2 group"
             >
@@ -99,6 +170,61 @@ const Page = () => {
             }}
           />
         </div>
+        <div className="">
+          <div className="">
+            <h2 className="tracking-tight font-black text-lg">
+              {
+                loading? "finding vehicles": vehicles.length>0?"available": "no nearby vehicles available"
+              }
+            </h2>
+            {
+              meta && <div className="">
+                {meta.label} rides near your pickup
+              </div>
+            }
+          </div>
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div className="" key={searching}>
+                <span className="">
+
+                Searching....
+                </span>
+              </motion.div>
+            )  : vehicles.length> 0 ?(
+              <motion.div className="" key={"live"}>
+                <Zap/>
+                <span className="">live</span>
+              </motion.div>
+            ): null}
+
+
+          </AnimatePresence>
+        </div>
+          <AnimatePresence>
+            {!loading && vehicles.length == 0 &&(
+              <motion.div className="">
+                <div className="">
+                  <Search/>
+                </div>
+                <p className="">Vehicles not found</p>
+                <p className="">{meta.label || "Vehicle"} drivers are available near your pick up right now</p>
+                <motion.button onClick={()=>getNearByVehicles(pickUpLat, pickUpLon,vehicle)}>
+                  <RefreshCcw /> retry search
+                </motion.button>
+              </motion.div>
+            ) }
+          </AnimatePresence>
+          <div className="">
+            {
+              vehicles.map((v,i)=>(
+                <motion.div className="" key={i}>
+                  
+
+                </motion.div>
+              ))
+            }
+          </div>
 
         {/* Trip Details Card - White/Light Design */}
         <motion.div
@@ -114,16 +240,23 @@ const Page = () => {
               <div className="flex gap-3 mb-4">
                 <div className="flex flex-col items-center">
                   <div className="w-3 h-3 rounded-full bg-green-500 mt-1.5 shadow-sm" />
-                  <div className="w-px flex-1 bg-gray-300 my-2" style={{ minHeight: 20 }} />
+                  <div
+                    className="w-px flex-1 bg-gray-300 my-2"
+                    style={{ minHeight: 20 }}
+                  />
                   <div className="w-3 h-3 rounded-full bg-red-500 mt-1.5 shadow-sm" />
                 </div>
                 <div className="flex-1 min-w-0 space-y-4">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Pickup Location</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                      Pickup Location
+                    </p>
                     <p className="text-gray-900 font-medium">{pickUp || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Dropoff Location</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                      Dropoff Location
+                    </p>
                     <p className="text-gray-900 font-medium">{drop || "-"}</p>
                   </div>
                 </div>
@@ -141,14 +274,19 @@ const Page = () => {
                   <Navigation className="w-3 h-3" />
                   <span className="text-xs font-medium">Distance</span>
                 </div>
-                <p className="text-xl font-bold text-gray-900">{km || 0} <span className="text-sm text-gray-500">km</span></p>
+                <p className="text-xl font-bold text-gray-900">
+                  {km || 0} <span className="text-sm text-gray-500">km</span>
+                </p>
               </div>
               <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 text-center">
                 <div className="flex items-center justify-center gap-1 text-purple-600 mb-1">
                   <Clock className="w-3 h-3" />
                   <span className="text-xs font-medium">Duration</span>
                 </div>
-                <p className="text-xl font-bold text-gray-900">{duration || 0} <span className="text-sm text-gray-500">min</span></p>
+                <p className="text-xl font-bold text-gray-900">
+                  {duration || 0}{" "}
+                  <span className="text-sm text-gray-500">min</span>
+                </p>
               </div>
               <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 text-center">
                 <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
@@ -167,12 +305,18 @@ const Page = () => {
                     {getVehicleIcon()}
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs uppercase tracking-wider">Selected Vehicle</p>
-                    <p className="text-gray-900 font-semibold capitalize text-lg mt-1">{vehicle}</p>
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">
+                      Selected Vehicle
+                    </p>
+                    <p className="text-gray-900 font-semibold capitalize text-lg mt-1">
+                      {vehicle}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider">Contact Number</p>
+                  <p className="text-gray-500 text-xs uppercase tracking-wider">
+                    Contact Number
+                  </p>
                   <p className="text-gray-900 font-semibold">+91 {mobile}</p>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 "use client";
-import { vehicleType } from "@/models/vehicleModel";
+import type { vehicleType } from "@/models/vehicleModel";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -209,9 +209,9 @@ const Page = () => {
     if (!pickUpLat) return toast.error("Select pickup from suggestion or GPS");
     if (!dropLat) return toast.error("Select drop from suggestion");
 
-    router.push(
-      `/user/search?pickup=${encodeURIComponent(pickUp)}&drop=${encodeURIComponent(drop)}&vehicle=${vehicle}&mobile=${mobile}&pickupLat=${pickUpLat}&pickupLon=${pickUpLon}&dropLat=${dropLat}&dropLon=${dropLon}`,
-    );
+   router.push(
+  `/user/search?pickup=${encodeURIComponent(pickUp)}&drop=${encodeURIComponent(drop)}&vehicle=${vehicle}&mobile=${mobile}&pickuplat=${pickUpLat}&pickuplon=${pickUpLon}&droplat=${dropLat}&droplon=${dropLon}`
+);
   };
 
   return (
@@ -440,6 +440,8 @@ const Page = () => {
               <input
                 onChange={(e) => {
                   setPickUp(e.target.value);
+    //               setPickUpLat(undefined); 
+    // setPickUpLon(undefined);
                   searchAddress(e.target.value, setPickUpSuggestions, null);
                 }}
                 value={pickUp}
@@ -598,7 +600,7 @@ const Page = () => {
           >
             {canContinue ? (
               <>
-                Continue to Payment
+                Continue
                 <ChevronRight size={18} />
               </>
             ) : (
